@@ -28,10 +28,10 @@ function U.get_char()
     return char
 end
 
-function U.replace_char(row, scol, ecol, repl)
+function U.replace_pair(row, scol, ecol, s_pair, e_pair)
     local r, s, e = row - 1, scol - 1, ecol - 1
-    A.nvim_buf_set_text(0, r, s, r, scol, { repl })
-    A.nvim_buf_set_text(0, r, e, r, ecol, { repl })
+    A.nvim_buf_set_text(0, r, e, r, ecol, { e_pair or s_pair })
+    A.nvim_buf_set_text(0, r, s, r, scol, { s_pair })
 end
 
 return U

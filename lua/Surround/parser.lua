@@ -1,12 +1,11 @@
-local A = vim.api
 local P = {}
 
-function P.walk(line, pat)
-    local row, col = unpack(A.nvim_win_get_cursor(0))
+function P.walk_char(col, line, pat)
     local reverse = false
+    local patt = vim.pesc(pat)
 
     local function inner(start)
-        local s, e = line:find(pat .. '.-' .. pat, start)
+        local s, e = line:find(patt .. '.-' .. patt, start)
 
         if not s or not e then
             -- Pattern not found even after reverse lookup
@@ -14,7 +13,7 @@ function P.walk(line, pat)
                 return
             end
 
-            print(line:reverse())
+            -- print(line:reverse())
 
             -- FIXME better to reverse the string
             reverse = true
@@ -35,7 +34,11 @@ function P.walk(line, pat)
         return inner(e - 1)
     end
 
-    return row, inner(1)
+    return inner(1)
+end
+
+function P.walk_pair()
+    -- TODO pairs logic
 end
 
 return P
