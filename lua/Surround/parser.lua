@@ -74,5 +74,17 @@ function P.walk_pair(col, line, spair, epair)
 end
 
 -- FIXME expanded pairs lookup
+function P.walk_pair_extended(row, spair, epair)
+    -- TODO logic
+    -- function op(s)
+    --     print(s:find('^.*%('))
+    -- end
+    -- function ep(s)
+    --     print(s:find('^.-%)'))
+    -- end
+    --
+    -- op('hello ( ( fhhffjf')
+    -- ep('hello ) ) fhhffjf')
+end
 
 return P
