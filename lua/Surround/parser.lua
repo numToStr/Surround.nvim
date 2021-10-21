@@ -52,6 +52,7 @@ function P.walk_pair(col, line, spair, epair)
         -- This is only valid before giving any score to other pairs
         -- We can also say this as `lookahead`
         if not score and s > col and e > col then
+            -- NOTE: this is the place where search for extended pairs begin
             return s, e
         end
 
