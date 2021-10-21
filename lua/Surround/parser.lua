@@ -37,7 +37,6 @@ function P.walk_char(col, line, pat)
     return inner_char(1)
 end
 
--- TODO lookahead
 function P.walk_pair(col, line, spair, epair)
     local score, sidx, eidx
     local coll = col + 1
@@ -49,7 +48,14 @@ function P.walk_pair(col, line, spair, epair)
             return sidx, eidx
         end
 
-        -- To qualify as the pairs the cursor should be in b/w opening and closeing pair
+        -- If starting and ending pair is away from cursor then it means we can easily replace
+        -- This is only valid before giving any score to other pairs
+        -- We can also say this as `lookahead`
+        if not score and s > col and e > col then
+            return s, e
+        end
+
+        -- To qualify as the pairs the cursor should be in b/w opening and closing pair
         if s <= coll and e >= coll then
             -- To solve the nested the pairs problem, we need to find the closest opening pair
             -- We can give each pair a score to determine the distance b/w the opening pair and the cursor
