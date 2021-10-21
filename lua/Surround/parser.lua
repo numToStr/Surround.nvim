@@ -73,4 +73,6 @@ function P.walk_pair(col, line, spair, epair)
     return inner_pair(1)
 end
 
+-- FIXME expanded pairs lookup
+
 return P
