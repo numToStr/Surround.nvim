@@ -29,16 +29,22 @@ function S.opfunc()
 
     -- local test = 'hello world' ' hello
 
-    print(Pair.get(target))
-    print(Pair.get(repl))
+    -- print()
+    -- print(Pair.get(rep() ) hehe(lo ( fhfhfh) ) hfhfhfh)
 
-    local scol, ecol = P.walk_char(col, line, target)
+    local spair, epair = Pair.get(target)
 
-    if not scol then
-        return vim.notify(('Surround :: Pattern %s not found'):format(target), vim.log.levels.WARN)
-    end
+    -- local h, f = P.walk_pair(col, line, spair, epair)
 
-    U.replace_pair(row, scol, ecol, repl)
+    dump(P.walk_pair(col, line, spair, epair))
+
+    -- local scol, ecol = P.walk_char(col, line, target)
+    --
+    -- if not scol then
+    --     return vim.notify(('Surround :: Pattern %s not found'):format(target), vim.log.levels.WARN)
+    -- end
+    --
+    -- U.replace_pair(row, scol, ecol, repl)
 end
 
 return S
