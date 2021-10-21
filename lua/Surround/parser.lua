@@ -1,11 +1,13 @@
+local A = vim.api
 local P = {}
 
 function P.walk_char(col, line, pat)
     local reverse = false
-    local patt = vim.pesc(pat)
+    local pat_esc = vim.pesc(pat)
+    local pattern = pat_esc .. '.-' .. pat_esc
 
     local function inner_char(start)
-        local s, e = line:find(patt .. '.-' .. patt, start)
+        local s, e = line:find(pattern, start)
 
         if not s or not e then
             -- Pattern not found even after reverse lookup
@@ -40,12 +42,16 @@ end
 function P.walk_pair(col, line, spair, epair)
     local score, sidx, eidx
     local coll = col + 1
+    local pattern = '%b' .. spair .. epair
 
     local function inner_pair(start)
-        local s, e = line:find('%b' .. spair .. epair, start)
+        local s, e = line:find(pattern, start)
 
+        -- When both idx are nil, It could means eol or pairs not found
         if not s or not e then
-            return sidx, eidx
+            -- true : If pairs not found in the line
+            -- false : If search reaches the end of line
+            return not score, sidx, eidx
         end
 
         -- If starting and ending pair is away from cursor then it means we can easily replace
@@ -53,7 +59,7 @@ function P.walk_pair(col, line, spair, epair)
         -- We can also say this as `lookahead`
         if not score and s > col and e > col then
             -- NOTE: this is the place where search for extended pairs begin
-            return s, e
+            return true, s, e
         end
 
         -- To qualify as the pairs the cursor should be in b/w opening and closing pair
@@ -74,18 +80,66 @@ function P.walk_pair(col, line, spair, epair)
     return inner_pair(1)
 end
 
--- FIXME expanded pairs lookup
-function P.walk_pair_extended(row, spair, epair)
-    -- TODO logic
+local function process_first_half(row, s_patrn, e_patrn)
+    -- First go up
     -- function op(s)
+    --     -- The last matching opening pair
     --     print(s:find('^.*%('))
     -- end
+    -- op('hello ( ( fhhffjf')
+
+    local first_half = A.nvim_buf_get_lines(0, 0, row - 1, false)
+
+    for i = #first_half, 1, -1 do
+        local line = first_half[i]
+
+        -- Check if there are closing brackets
+        if line:find(e_patrn) then
+            return
+        end
+
+        local is_found, col = line:find(s_patrn)
+        if is_found then
+            print(first_half[i])
+            return i, col
+        end
+    end
+end
+
+local function process_second_half(row, s_patrn, e_patrn)
+    -- Next go down
     -- function ep(s)
+    --     The first matching closing pairs
     --     print(s:find('^.-%)'))
     -- end
     --
-    -- op('hello ( ( fhhffjf')
     -- ep('hello ) ) fhhffjf')
+
+    local second_half = A.nvim_buf_get_lines(0, row, -1, false)
+
+    for i, line in ipairs(second_half) do
+        local is_found, col = line:find(e_patrn)
+
+        -- Check if there are opening brackets
+        if line:find(s_patrn) then
+            return
+        end
+
+        if is_found then
+            print(line)
+            return row + i, col
+        end
+    end
+end
+
+function P.walk_pair_extended(row, spair, epair)
+    local s_patrn = '^.*%' .. spair
+    local e_patrn = '^.-%' .. epair
+
+    local srow, scol = process_first_half(row, s_patrn, e_patrn)
+    local erow, ecol = process_second_half(row, s_patrn, e_patrn)
+
+    return srow, scol, erow, ecol
 end
 
 return P
