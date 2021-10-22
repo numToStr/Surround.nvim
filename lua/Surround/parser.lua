@@ -49,6 +49,7 @@ function P.walk_pair(col, line, spair, epair)
 
         -- When both idx are nil, It could means eol or pairs not found
         if not s or not e then
+            -- NOTE: this is the place where search for extended pairs begin
             -- true : If pairs not found in the line
             -- false : If search reaches the end of line
             return not score, sidx, eidx
@@ -58,8 +59,7 @@ function P.walk_pair(col, line, spair, epair)
         -- This is only valid before giving any score to other pairs
         -- We can also say this as `lookahead`
         if not score and s > col and e > col then
-            -- NOTE: this is the place where search for extended pairs begin
-            return true, s, e
+            return false, s, e
         end
 
         -- To qualify as the pairs the cursor should be in b/w opening and closing pair
@@ -89,19 +89,23 @@ local function process_first_half(row, s_patrn, e_patrn)
     -- op('hello ( ( fhhffjf')
 
     local first_half = A.nvim_buf_get_lines(0, 0, row - 1, false)
+    local closing_count = 0
 
     for i = #first_half, 1, -1 do
         local line = first_half[i]
 
         -- Check if there are closing brackets
         if line:find(e_patrn) then
-            return
+            closing_count = closing_count + 1
         end
 
         local is_found, col = line:find(s_patrn)
         if is_found then
-            print(first_half[i])
-            return i, col
+            if closing_count == 0 then
+                return i, col
+            else
+                closing_count = closing_count - 1
+            end
         end
     end
 end
@@ -116,22 +120,27 @@ local function process_second_half(row, s_patrn, e_patrn)
     -- ep('hello ) ) fhhffjf')
 
     local second_half = A.nvim_buf_get_lines(0, row, -1, false)
+    local opening_count = 0
 
     for i, line in ipairs(second_half) do
         local is_found, col = line:find(e_patrn)
 
         -- Check if there are opening brackets
         if line:find(s_patrn) then
-            return
+            opening_count = opening_count + 1
         end
 
         if is_found then
-            print(line)
-            return row + i, col
+            if opening_count == 0 then
+                return row + i, col
+            else
+                opening_count = opening_count - 1
+            end
         end
     end
 end
 
+-- TODO async maybe
 function P.walk_pair_extended(row, spair, epair)
     local s_patrn = '^.*%' .. spair
     local e_patrn = '^.-%' .. epair

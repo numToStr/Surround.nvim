@@ -27,35 +27,42 @@ function S.opfunc()
     local line = A.nvim_get_current_line()
     local row, col = unpack(A.nvim_win_get_cursor(0))
 
-    -- local test = 'hello world' ' hello
+    local spair_target, epair_target = Pair.get(target)
 
-    -- print(Pair.get(rep() ) hehe(lo ( fhfhfh) ) hfhfhfh)
+    if spair_target then
+        local ex, scol, ecol = P.walk_pair(col, line, spair_target, epair_target)
 
-    -- local scol, ecol = P.walk_char(col, line, target)
+        if not ex and not scol then
+            return U.wprint(('Pair %s not found'):format(target))
+        end
 
-    local spair, epair = Pair.get(target)
-    local ex, scol, ecol = P.walk_pair(col, line, spair, epair)
+        local spair_repl, epair_repl = Pair.get(repl, repl)
 
-    print(ex, scol, ecol)
+        if not ex then
+            U.replace_pair(row, scol, ecol, spair_repl, epair_repl)
+        else
+            local srow_ex, scol_ex, erow_ex, ecol_ex = P.walk_pair_extended(row, spair_target, epair_target)
+            if srow_ex and erow_ex then
+                U.replace_ex_pair(srow_ex, erow_ex, scol_ex, ecol_ex, spair_repl, epair_repl)
+            end
+        end
+    else
+        local scol, ecol = P.walk_char(col, line, target)
 
-    if ex then
-        print(P.walk_pair_extended(row, spair, epair))
+        if not scol then
+            return U.wprint(('Pattern %s not found'):format(target))
+        end
+
+        local spair_repl, epair_repl = Pair.get(repl, repl)
+        U.replace_pair(row, scol, ecol, spair_repl, epair_repl)
     end
-
-    if not scol then
-        return vim.notify(('Surround :: Pattern %s not found'):format(target), vim.log.levels.WARN)
-    end
-
-    -- U.replace_pair(row, scol, ecol, repl)
-
-    -- local spair_, epair_ = Pair.get(repl)
-    -- U.replace_pair(row, scol, ecol, spair_, epair_)
 end
 
 local H = {
     'hello',
     'hello',
     'hello',
+    { { 'hello' } },
     'hello',
     'hello',
     'hello',
@@ -63,7 +70,15 @@ local H = {
     'hello',
     'hello',
     'hello',
-    'hello',
+}
+
+local I = {
+    { 1 },
+    { 2 },
+    { 3 },
+    { 4 },
+    { 4 },
+    { 5 },
 }
 
 return S

@@ -12,12 +12,13 @@ end
 
 ---Get opening and closing pair from a char
 ---@param p string Pair to search
+---@param d string (Optional) Pair char if pairs not found in the set
 ---@return string string Opening pair
 ---@return string string Closing pair
-function P.get(p)
+function P.get(p, d)
     local found = P.__pairs[p]
     if not found then
-        return
+        return d, d
     end
 
     local pair, is_end = unpack(found)
