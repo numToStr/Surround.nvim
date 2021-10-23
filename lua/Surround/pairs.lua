@@ -2,12 +2,18 @@ local P = {
     __pairs = {},
 }
 
+---Default pairs
+function P.default()
+    P.set('(', ')').set('[', ']').set('{', '}').set('<', '>')
+end
+
 ---Store opening and closing pair
 ---@param s string Opening pair
 ---@param e string Closing pair
 function P.set(s, e)
-    P.__pairs[s] = { e, true }
+    P.__pairs[s] = { e, true } -- end pair is true
     P.__pairs[e] = { s, false }
+    return P
 end
 
 ---Get opening and closing pair from a char

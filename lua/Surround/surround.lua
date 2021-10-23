@@ -1,4 +1,4 @@
-local Pair = require('Surround.pairs')
+local Pairs = require('Surround.pairs')
 local P = require('Surround.parser')
 local U = require('Surround.utils')
 local A = vim.api
@@ -7,10 +7,7 @@ local S = {}
 
 function S.setup()
     -- Default pairs
-    Pair.set('(', ')')
-    Pair.set('[', ']')
-    Pair.set('{', '}')
-    Pair.set('<', '>')
+    Pairs.default()
 end
 
 function S.opfunc()
@@ -27,7 +24,7 @@ function S.opfunc()
     local line = A.nvim_get_current_line()
     local row, col = unpack(A.nvim_win_get_cursor(0))
 
-    local spair_target, epair_target = Pair.get(target)
+    local spair_target, epair_target = Pairs.get(target)
 
     if spair_target then
         local ex, scol, ecol = P.walk_pair(col, line, spair_target, epair_target)
@@ -36,7 +33,7 @@ function S.opfunc()
             return U.wprint(('Pair %s not found'):format(target))
         end
 
-        local spair_repl, epair_repl = Pair.get(repl, repl)
+        local spair_repl, epair_repl = Pairs.get(repl, repl)
 
         if not ex then
             U.replace_pair(row, scol, ecol, spair_repl, epair_repl)
@@ -53,7 +50,7 @@ function S.opfunc()
             return U.wprint(('Pattern %s not found'):format(target))
         end
 
-        local spair_repl, epair_repl = Pair.get(repl, repl)
+        local spair_repl, epair_repl = Pairs.get(repl, repl)
         U.replace_pair(row, scol, ecol, spair_repl, epair_repl)
     end
 end
