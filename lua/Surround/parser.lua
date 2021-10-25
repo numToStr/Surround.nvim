@@ -95,14 +95,16 @@ local function process_first_half(row, s_patrn, e_patrn)
         local line = first_half[i]
 
         -- Check if there are closing brackets
-        if line:find(e_patrn) then
+        local found, ep_col = line:find(e_patrn)
+        if found then
             closing_count = closing_count + 1
         end
 
-        local is_found, col = line:find(s_patrn)
+        local is_found, op_col = line:find(s_patrn)
         if is_found then
-            if closing_count == 0 then
-                return i, col
+            if (ep_col and op_col > ep_col) or closing_count == 0 then
+                print(line)
+                return i, op_col
             else
                 closing_count = closing_count - 1
             end
@@ -123,16 +125,16 @@ local function process_second_half(row, s_patrn, e_patrn)
     local opening_count = 0
 
     for i, line in ipairs(second_half) do
-        local is_found, col = line:find(e_patrn)
-
         -- Check if there are opening brackets
-        if line:find(s_patrn) then
+        local found, ep_col = line:find(s_patrn)
+        if found then
             opening_count = opening_count + 1
         end
 
+        local is_found, op_col = line:find(e_patrn)
         if is_found then
-            if opening_count == 0 then
-                return row + i, col
+            if (ep_col and op_col < ep_col) or opening_count == 0 then
+                return row + i, op_col
             else
                 opening_count = opening_count - 1
             end
