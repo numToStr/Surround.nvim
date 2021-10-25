@@ -3,6 +3,17 @@ local fn = vim.fn
 
 local U = {}
 
+---Surround action
+---@class Action
+---@field add number Includes ys, yS, yss, ySs, ySS
+---@field change number Includes cs, cS
+---@field delete number Includes ds
+U.action = {
+    add = 0,
+    change = 1,
+    delete = 2,
+}
+
 function U.wprint(msg)
     return vim.notify('Surround :: ' .. msg, vim.log.levels.WARN)
 end
