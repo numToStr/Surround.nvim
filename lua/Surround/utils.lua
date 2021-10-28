@@ -1,5 +1,4 @@
 local A = vim.api
-local fn = vim.fn
 
 local U = {}
 
@@ -28,7 +27,7 @@ function U.is_esc(s)
 end
 
 function U.parse_char()
-    local num = fn.getchar()
+    local num = vim.fn.getchar()
     if type(num) == 'number' then
         return string.char(num)
     end

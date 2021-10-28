@@ -70,8 +70,8 @@ function S.setup()
     -- Default pairs
     Pairs.default()
 
-    local map = A.nvim_set_keymap
-    local map_opt = { noremap = true, silent = true }
+    -- local map = A.nvim_set_keymap
+    -- local map_opt = { noremap = true, silent = true }
 
     -- map('n', 'cs', "<CMD>lua require('Surround.surround').cs()<CR>", map_opt)
     -- map('n', 'ds', "<CMD>lua require('Surround.surround').ds()<CR>", map_opt)
@@ -83,28 +83,5 @@ function S.setup()
     --    map_opt
     --)
 end
-
-local H = {
-    'hello',
-    'hello',
-    'hello',
-    { { 'hello' } },
-    'hello',
-    'hello',
-    'hello',
-    'hello',
-    'hello',
-    'hello',
-    'hello',
-}
-
-local I = {
-    { 1 },
-    { 2 },
-    { 3 },
-    { 4 },
-    { 4 },
-    { 5 },
-}
 
 return S
