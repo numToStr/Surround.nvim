@@ -80,75 +80,74 @@ function P.walk_pair(col, line, spair, epair)
     return inner_pair(1)
 end
 
-local function process_first_half(row, s_patrn, e_patrn)
-    -- First go up
-    -- function op(s)
-    --     -- The last matching opening pair
-    --     print(s:find('^.*%('))
-    -- end
-    -- op('hello ( ( fhhffjf')
-
+local function process_first_half(row, spair, epair)
     local first_half = A.nvim_buf_get_lines(0, 0, row - 1, false)
-    local closing_count = 0
+    local pattern = '([' .. vim.pesc(spair) .. vim.pesc(epair) .. '])'
+    local stack = {}
 
-    for i = #first_half, 1, -1 do
-        local line = first_half[i]
+    local function inner(ln, srow)
+        local found, idx, wat = ln:find(pattern, srow)
 
-        -- Check if there are closing brackets
-        local found, ep_col = line:find(e_patrn)
-        if found then
-            closing_count = closing_count + 1
+        if not found then
+            return stack[#stack]
         end
 
-        local is_found, op_col = line:find(s_patrn)
-        if is_found then
-            if (ep_col and op_col > ep_col) or closing_count == 0 then
-                print(line)
-                return i, op_col
-            else
-                closing_count = closing_count - 1
-            end
+        if wat == spair then
+            table.insert(stack, idx)
+        end
+
+        if wat == epair then
+            table.remove(stack)
+        end
+
+        return inner(ln, idx + 1)
+    end
+
+    for i = #first_half, 1, -1 do
+        local found = inner(first_half[i], 1)
+        if found then
+            return i, found
         end
     end
 end
 
-local function process_second_half(row, s_patrn, e_patrn)
-    -- Next go down
-    -- function ep(s)
-    --     The first matching closing pairs
-    --     print(s:find('^.-%)'))
-    -- end
-    --
-    -- ep('hello ) ) fhhffjf')
-
+local function process_second_half(row, spair, epair)
     local second_half = A.nvim_buf_get_lines(0, row, -1, false)
+    local pattern = '([' .. vim.pesc(spair) .. vim.pesc(epair) .. '])'
     local opening_count = 0
 
-    for i, line in ipairs(second_half) do
-        -- Check if there are opening brackets
-        local found, ep_col = line:find(s_patrn)
-        if found then
-            opening_count = opening_count + 1
-        end
+    local function inner(ln, srow)
+        local found, idx, wat = ln:find(pattern, srow)
 
-        local is_found, op_col = line:find(e_patrn)
-        if is_found then
-            if (ep_col and op_col < ep_col) or opening_count == 0 then
-                return row + i, op_col
-            else
+        if found then
+            if opening_count == 0 and wat == epair then
+                return idx
+            end
+
+            if wat == spair then
+                opening_count = opening_count + 1
+            end
+
+            if wat == epair then
                 opening_count = opening_count - 1
             end
+
+            return inner(ln, idx + 1)
+        end
+    end
+
+    for i, line in ipairs(second_half) do
+        local found = inner(line, 1)
+        if found then
+            return row + i, found
         end
     end
 end
 
 -- TODO async maybe
 function P.walk_pair_extended(row, spair, epair)
-    local s_patrn = '^.*%' .. spair
-    local e_patrn = '^.-%' .. epair
-
-    local srow, scol = process_first_half(row, s_patrn, e_patrn)
-    local erow, ecol = process_second_half(row, s_patrn, e_patrn)
+    local srow, scol = process_first_half(row, spair, epair)
+    local erow, ecol = process_second_half(row, spair, epair)
 
     return srow, scol, erow, ecol
 end
