@@ -1,9 +1,15 @@
 local A = vim.api
 local P = {}
 
-function P.walk_char(col, line, pat)
+---Find position of linear pairs ie. '"
+---@param col number Column number
+---@param line string Current line
+---@param pair string Pair to search
+---@return number number Starting position of pair
+---@return number number Ending position of pair
+function P.walk_char(col, line, pair)
     local reverse = false
-    local pat_esc = vim.pesc(pat)
+    local pat_esc = vim.pesc(pair)
     local pattern = pat_esc .. '.-' .. pat_esc
 
     local function inner_char(start)
@@ -39,6 +45,13 @@ function P.walk_char(col, line, pat)
     return inner_char(1)
 end
 
+---Find position of combine-pairs ie. () [] {}
+---@param col number Current column position
+---@param line string Current line
+---@param spair string Opening pair
+---@param epair string Closing pair
+---@return number number Starting position of pair
+---@return number number Ending position of pair
 function P.walk_pair(col, line, spair, epair)
     local score, sidx, eidx
     local coll = col + 1
@@ -145,6 +158,14 @@ local function process_second_half(row, spair, epair)
 end
 
 -- TODO async maybe
+---Find position of combine-pairs over multiptle lines
+---@param row number Current line number
+---@param spair string Opening pair
+---@param epair string Closing pair
+---@return number number Starting row
+---@return number number Starting column
+---@return number number Ending row
+---@return number number Ending column
 function P.walk_pair_extended(row, spair, epair)
     local srow, scol = process_first_half(row, spair, epair)
     local erow, ecol = process_second_half(row, spair, epair)

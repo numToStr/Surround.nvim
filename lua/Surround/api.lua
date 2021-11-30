@@ -3,25 +3,20 @@ local P = require('Surround.parser')
 local U = require('Surround.utils')
 local A = vim.api
 
-local S = {}
+---Plugin's Config
+---@class Config
+---@field mappings boolean Create default mappings
 
----OpFunc
----@param _ any
----@param action Action
-function S.opfunc(_, action)
-    local target = U.get_char()
-    if not target then
-        return U.abort()
-    end
+---@class Surround
+---@field config Config
+local S = {
+    config = nil,
+}
 
-    local repl
-    if action == U.action.change then
-        repl = U.get_char()
-        if not repl or (target == repl) then
-            return U.abort()
-        end
-    end
-
+---Replace target pairs with replacement pairs
+---@param target string Target pair
+---@param repl string Replacement pair
+function S.replacer(target, repl)
     local line = A.nvim_get_current_line()
     local row, col = unpack(A.nvim_win_get_cursor(0))
 
@@ -54,27 +49,48 @@ function S.opfunc(_, action)
     end
 end
 
-function S.ys()
-    S.opfunc(nil, U.action.add)
+---Surround the text with pairs
+-- function S.add()
+--     S.opfunc(nil, U.action.add)
+-- end
+
+---Change the surrounded pairs
+function S.change()
+    local target = U.get_char()
+    local rep = U.get_char()
+    if target == rep then
+        return U.abort()
+    end
+    S.replacer(target, rep)
 end
 
-function S.cs()
-    S.opfunc(nil, U.action.change)
+---Deletes the surrounded pairs
+function S.delete()
+    local target = U.get_char()
+    S.replacer(target)
 end
 
-function S.ds()
-    S.opfunc(nil, U.action.delete)
-end
+---Setup the plugin and configure it
+---@param cfg Config
+function S.setup(cfg)
+    S.config = {
+        mappings = true,
+    }
 
-function S.setup()
+    if cfg then
+        S.config = vim.tbl_extend('force', S.config, cfg)
+    end
+
     -- Default pairs
     Pairs.default()
 
-    -- local map = A.nvim_set_keymap
-    -- local map_opt = { noremap = true, silent = true }
+    if S.config.mappings then
+        local map = A.nvim_set_keymap
+        local map_opt = { noremap = true, silent = true }
 
-    -- map('n', 'cs', "<CMD>lua require('Surround.surround').cs()<CR>", map_opt)
-    -- map('n', 'ds', "<CMD>lua require('Surround.surround').ds()<CR>", map_opt)
+        map('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>', map_opt)
+        map('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>', map_opt)
+    end
 
     --map(
     --    'n',
