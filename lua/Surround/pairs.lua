@@ -1,3 +1,4 @@
+---@class Pairs
 local P = {
     __pairs = {},
 }
@@ -17,23 +18,23 @@ function P.set(s, e)
 end
 
 ---Get opening and closing pair from a char
----@param p string Pair to search
----@param d string (Optional) Pair char if pairs not found in the set
+---@param pair string Pair to search
+---@param default string (Optional) Pair char if pairs not found in the set
 ---@return string string Opening pair
 ---@return string string Closing pair
-function P.get(p, d)
-    local found = P.__pairs[p]
+function P.get(pair, default)
+    local found = P.__pairs[pair]
     if not found then
-        return d, d
+        return default, default
     end
 
-    local pair, is_end = unpack(found)
+    local pp, is_end = unpack(found)
 
     if is_end then
-        return p, pair
+        return pair, pp
     end
 
-    return pair, p
+    return pp, pair
 end
 
 return P

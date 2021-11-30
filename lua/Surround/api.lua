@@ -3,7 +3,15 @@ local P = require('Surround.parser')
 local U = require('Surround.utils')
 local A = vim.api
 
-local S = {}
+---Plugin's Config
+---@class Config
+---@field mappings boolean Create default mappings
+
+---@class Surround
+---@field config Config
+local S = {
+    config = nil,
+}
 
 ---OpFunc
 ---@param _ any
@@ -54,27 +62,34 @@ function S.opfunc(_, action)
     end
 end
 
-function S.ys()
+---Surround the text with pairs
+function S.add()
     S.opfunc(nil, U.action.add)
 end
 
-function S.cs()
+---Change the surrounded pairs
+function S.change()
     S.opfunc(nil, U.action.change)
 end
 
-function S.ds()
+---Deletes the surrounded pairs
+function S.delete()
     S.opfunc(nil, U.action.delete)
 end
 
-function S.setup()
+---Setup the plugin and configure it
+---@param cfg Config
+function S.setup(cfg)
     -- Default pairs
     Pairs.default()
 
-    -- local map = A.nvim_set_keymap
-    -- local map_opt = { noremap = true, silent = true }
+    if cfg.mappings then
+        local map = A.nvim_set_keymap
+        local map_opt = { noremap = true, silent = true }
 
-    -- map('n', 'cs', "<CMD>lua require('Surround.surround').cs()<CR>", map_opt)
-    -- map('n', 'ds', "<CMD>lua require('Surround.surround').ds()<CR>", map_opt)
+        map('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>', map_opt)
+        map('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>', map_opt)
+    end
 
     --map(
     --    'n',

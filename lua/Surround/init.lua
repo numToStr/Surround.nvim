@@ -1,5 +1,5 @@
-local S = require('Surround.surround')
-
 return {
-    setup = S.setup,
+    setup = function()
+        require('Surround.api').setup()
+    end,
 }
