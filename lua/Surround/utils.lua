@@ -24,13 +24,13 @@ U.action = {
 ---Prints a warning
 ---@param msg string
 function U.wprint(msg)
-    return vim.notify('Surround :: ' .. msg, vim.log.levels.WARN)
+    return vim.notify('[Surround] ' .. msg, vim.log.levels.WARN)
 end
 
 ---Abort the current operation
 function U.abort()
     local esc = A.nvim_replace_termcodes('<ESC>', true, true, true)
-    A.nvim_feedkeys(esc, 'n', false)
+    A.nvim_feedkeys(esc, 'ni', false)
 end
 
 ---Check if a string is <ESC> key

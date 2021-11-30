@@ -1,5 +1,5 @@
 return {
-    setup = function()
-        require('Surround.api').setup()
+    setup = function(...)
+        require('Surround.api').setup(...)
     end,
 }

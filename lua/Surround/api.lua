@@ -65,8 +65,22 @@ function S.add(vmode)
         local wrapped = spair .. line:sub(scol, ecol) .. epair
         A.nvim_buf_set_text(0, row, range.scol, row, ecol, { wrapped })
     else
-        local lines = A.nvim_buf_get_lines(0, range.srow - 1, range.erow, false)
-        print(lines)
+        local srow = range.srow - 1
+        local lines = A.nvim_buf_get_lines(0, srow, range.erow, false)
+
+        local tabs, indent = (' '):rep(vim.bo.tabstop), nil
+        for i, line in ipairs(lines) do
+            if not indent then
+                indent = line:match('%s*')
+            end
+            lines[i] = tabs .. line
+        end
+        local start_ln = indent .. spair
+        table.insert(lines, 1, start_ln)
+        local end_ln = indent .. epair
+        table.insert(lines, end_ln)
+
+        A.nvim_buf_set_lines(0, srow, range.erow, false, lines)
     end
 end
 
@@ -107,12 +121,9 @@ function S.setup(cfg)
     Pairs.default()
 
     if S.config.mappings then
-        local map = A.nvim_set_keymap
-        local map_opt = { noremap = true, silent = true }
-
-        map('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>', map_opt)
-        map('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>', map_opt)
-        map('n', 'ys', "<CMD>set operatorfunc=v:lua.require'Surround.api'.add<CR>g@", map_opt)
+        vim.keymap.set('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>')
+        vim.keymap.set('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>')
+        vim.keymap.set('n', 'ys', "<CMD>set operatorfunc=v:lua.require'Surround.api'.add<CR>g@")
     end
 end
 
