@@ -50,15 +50,34 @@ function S.replacer(target, repl)
 end
 
 ---Surround the text with pairs
--- function S.add()
---     S.opfunc(nil, U.action.add)
--- end
+function S.add(vmode)
+    local pair = U.get_char()
+    if not pair then
+        return U.abort()
+    end
+
+    local range = U.get_region(vmode)
+    local spair, epair = Pairs.get(pair, pair)
+
+    if range.srow == range.erow then
+        local line = A.nvim_get_current_line()
+        local row, scol, ecol = range.srow - 1, range.scol + 1, range.ecol + 1
+        local wrapped = spair .. line:sub(scol, ecol) .. epair
+        A.nvim_buf_set_text(0, row, range.scol, row, ecol, { wrapped })
+    else
+        local lines = A.nvim_buf_get_lines(0, range.srow - 1, range.erow, false)
+        print(lines)
+    end
+end
 
 ---Change the surrounded pairs
 function S.change()
     local target = U.get_char()
+    if not target then
+        return U.abort()
+    end
     local rep = U.get_char()
-    if target == rep then
+    if not rep or target == rep then
         return U.abort()
     end
     S.replacer(target, rep)
@@ -67,6 +86,9 @@ end
 ---Deletes the surrounded pairs
 function S.delete()
     local target = U.get_char()
+    if not target then
+        return U.abort()
+    end
     S.replacer(target)
 end
 
@@ -90,14 +112,8 @@ function S.setup(cfg)
 
         map('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>', map_opt)
         map('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>', map_opt)
+        map('n', 'ys', "<CMD>set operatorfunc=v:lua.require'Surround.api'.add<CR>g@", map_opt)
     end
-
-    --map(
-    --    'n',
-    --    'gs',
-    --    "<CMD>set operatorfunc=v:lua.require'Surround.surround'.opfunc<CR><CMD>lua require('Surround.surround').opfunc()<CR>",
-    --    map_opt
-    --)
 end
 
 return S

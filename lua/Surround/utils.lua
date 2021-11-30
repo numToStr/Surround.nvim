@@ -1,6 +1,15 @@
 local A = vim.api
 local U = {}
 
+---@alias VMode 'line'|'char'|'v'|'V' Vim Mode. Read `:h map-operator`
+
+---Range of the selection that needs to be commented
+---@class SRange
+---@field srow number Starting row
+---@field scol number Starting column
+---@field erow number Ending row
+---@field ecol number Ending column
+
 ---Surround action
 ---@class Action
 ---@field add number Includes ys, yS, yss, ySs, ySS
@@ -45,9 +54,31 @@ end
 function U.get_char()
     local char = U.parse_char()
     if U.is_esc(char) then
-        return U.abort()
+        return nil
     end
     return char
+end
+
+---Get region for vim mode
+---@param vmode VMode
+---@return SRange
+function U.get_region(vmode)
+    local m = A.nvim_buf_get_mark
+    local buf = 0
+    local sln, eln
+
+    if vmode:match('[vV]') then
+        sln, eln = m(buf, '<'), m(buf, '>')
+    else
+        sln, eln = m(buf, '['), m(buf, ']')
+    end
+
+    return {
+        srow = sln[1],
+        scol = sln[2],
+        erow = eln[1],
+        ecol = eln[2],
+    }
 end
 
 ---Replace pairs on the same line
