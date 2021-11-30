@@ -45,7 +45,7 @@ end
 function U.get_char()
     local char = U.parse_char()
     if U.is_esc(char) then
-        return
+        return U.abort()
     end
     return char
 end

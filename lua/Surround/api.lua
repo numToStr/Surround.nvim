@@ -13,23 +13,10 @@ local S = {
     config = nil,
 }
 
----OpFunc
----@param _ any
----@param action Action
-function S.opfunc(_, action)
-    local target = U.get_char()
-    if not target then
-        return U.abort()
-    end
-
-    local repl
-    if action == U.action.change then
-        repl = U.get_char()
-        if not repl or (target == repl) then
-            return U.abort()
-        end
-    end
-
+---Replace target pairs with replacement pairs
+---@param target string Target pair
+---@param repl string Replacement pair
+function S.replacer(target, repl)
     local line = A.nvim_get_current_line()
     local row, col = unpack(A.nvim_win_get_cursor(0))
 
@@ -63,27 +50,41 @@ function S.opfunc(_, action)
 end
 
 ---Surround the text with pairs
-function S.add()
-    S.opfunc(nil, U.action.add)
-end
+-- function S.add()
+--     S.opfunc(nil, U.action.add)
+-- end
 
 ---Change the surrounded pairs
 function S.change()
-    S.opfunc(nil, U.action.change)
+    local target = U.get_char()
+    local rep = U.get_char()
+    if target == rep then
+        return U.abort()
+    end
+    S.replacer(target, rep)
 end
 
 ---Deletes the surrounded pairs
 function S.delete()
-    S.opfunc(nil, U.action.delete)
+    local target = U.get_char()
+    S.replacer(target)
 end
 
 ---Setup the plugin and configure it
 ---@param cfg Config
 function S.setup(cfg)
+    S.config = {
+        mappings = true,
+    }
+
+    if cfg then
+        S.config = vim.tbl_extend('force', S.config, cfg)
+    end
+
     -- Default pairs
     Pairs.default()
 
-    if cfg.mappings then
+    if S.config.mappings then
         local map = A.nvim_set_keymap
         local map_opt = { noremap = true, silent = true }
 
