@@ -1,4 +1,5 @@
 local A = vim.api
+local mark = A.nvim_buf_get_mark
 local U = {}
 
 ---@alias VMode 'line'|'char'|'v'|'V' Vim Mode. Read `:h map-operator`
@@ -59,26 +60,30 @@ function U.get_char()
     return char
 end
 
----Get region for vim mode
----@param vmode VMode
+function U.get_indent(ln)
+    return ln:match('(%s*)(.*)')
+end
+
+---Get region for line movement or visual selection
+---NOTE: Returns the current line, if `vmode` is not given.
+---@param vmode? VMode
 ---@return SRange
 function U.get_region(vmode)
-    local m = A.nvim_buf_get_mark
+    if not vmode then
+        local row, col = unpack(A.nvim_win_get_cursor(0))
+        return { srow = row, scol = col, erow = row, ecol = col }
+    end
+
     local buf = 0
     local sln, eln
 
     if vmode:match('[vV]') then
-        sln, eln = m(buf, '<'), m(buf, '>')
+        sln, eln = mark(buf, '<'), mark(buf, '>')
     else
-        sln, eln = m(buf, '['), m(buf, ']')
+        sln, eln = mark(buf, '['), mark(buf, ']')
     end
 
-    return {
-        srow = sln[1],
-        scol = sln[2],
-        erow = eln[1],
-        ecol = eln[2],
-    }
+    return { srow = sln[1], scol = sln[2], erow = eln[1], ecol = eln[2] }
 end
 
 ---Replace pairs on the same line

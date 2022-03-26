@@ -9,9 +9,7 @@ local A = vim.api
 
 ---@class Surround
 ---@field config Config
-local S = {
-    config = nil,
-}
+local S = {}
 
 ---Replace target pairs with replacement pairs
 ---@param target string Target pair
@@ -20,8 +18,8 @@ function S.replacer(target, repl)
     local line = A.nvim_get_current_line()
     local row, col = unpack(A.nvim_win_get_cursor(0))
 
-    local spair_target, epair_target = Pairs.get(target)
-    local spair_repl, epair_repl = Pairs.get(repl, repl)
+    local spair_target, epair_target = Pairs:get(target)
+    local spair_repl, epair_repl = Pairs:get(repl, repl)
 
     if spair_target then
         local ex, scol, ecol = P.walk_pair(col, line, spair_target, epair_target)
@@ -57,31 +55,41 @@ function S.add(vmode)
     end
 
     local range = U.get_region(vmode)
-    local spair, epair = Pairs.get(pair, pair)
+    local spair, epair = Pairs:get(pair, pair)
 
+    -- We are in full line mode (yss)
+    if range.srow == range.erow and range.scol == range.ecol then
+        local line = A.nvim_get_current_line()
+        local indent, chars = U.get_indent(line)
+        return A.nvim_buf_set_lines(0, range.srow - 1, range.srow, false, {
+            indent .. spair .. chars .. epair,
+        })
+    end
+
+    -- When we are adding pairs on the same line (ysiw | ys{t,f})
     if range.srow == range.erow then
         local line = A.nvim_get_current_line()
         local row, scol, ecol = range.srow - 1, range.scol + 1, range.ecol + 1
-        local wrapped = spair .. line:sub(scol, ecol) .. epair
-        A.nvim_buf_set_text(0, row, range.scol, row, ecol, { wrapped })
-    else
-        local srow = range.srow - 1
-        local lines = A.nvim_buf_get_lines(0, srow, range.erow, false)
-
-        local tabs, indent = (' '):rep(vim.bo.tabstop), nil
-        for i, line in ipairs(lines) do
-            if not indent then
-                indent = line:match('%s*')
-            end
-            lines[i] = tabs .. line
-        end
-        local start_ln = indent .. spair
-        table.insert(lines, 1, start_ln)
-        local end_ln = indent .. epair
-        table.insert(lines, end_ln)
-
-        A.nvim_buf_set_lines(0, srow, range.erow, false, lines)
+        return A.nvim_buf_set_text(0, row, range.scol, row, ecol, {
+            spair .. line:sub(scol, ecol) .. epair,
+        })
     end
+
+    -- When we are adding pairs over mutliple lines (ys[count]{j,k})
+    local srow = range.srow - 1
+    local lines = A.nvim_buf_get_lines(0, srow, range.erow, false)
+
+    ----- adjusting indentation -----
+    local indent = U.get_indent(lines[1] or '')
+    local tabs = (' '):rep(vim.bo.tabstop) -- NOTE: maybe use something other than `tabstop`
+    for i, line in ipairs(lines) do
+        lines[i] = tabs .. line
+    end
+    table.insert(lines, 1, indent .. spair)
+    table.insert(lines, indent .. epair)
+    ----- adjusting indentation -----
+
+    return A.nvim_buf_set_lines(0, srow, range.erow, false, lines)
 end
 
 ---Change the surrounded pairs
@@ -118,12 +126,13 @@ function S.setup(cfg)
     end
 
     -- Default pairs
-    Pairs.default()
+    Pairs:default()
 
     if S.config.mappings then
-        vim.keymap.set('n', 'cs', '<CMD>lua require("Surround.api").change()<CR>')
-        vim.keymap.set('n', 'ds', '<CMD>lua require("Surround.api").delete()<CR>')
+        vim.keymap.set('n', 'cs', '<CMD>lua require"Surround.api".change()<CR>')
+        vim.keymap.set('n', 'ds', '<CMD>lua require"Surround.api".delete()<CR>')
         vim.keymap.set('n', 'ys', "<CMD>set operatorfunc=v:lua.require'Surround.api'.add<CR>g@")
+        vim.keymap.set('n', 'yss', '<CMD>lua require"Surround.api".add()<CR>')
     end
 end
 
