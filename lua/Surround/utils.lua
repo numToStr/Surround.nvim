@@ -1,5 +1,15 @@
 local A = vim.api
+local mark = A.nvim_buf_get_mark
 local U = {}
+
+---@alias VMode 'line'|'char'|'v'|'V' Vim Mode. Read `:h map-operator`
+
+---Range of the selection that needs to be commented
+---@class SRange
+---@field srow number Starting row
+---@field scol number Starting column
+---@field erow number Ending row
+---@field ecol number Ending column
 
 ---Surround action
 ---@class Action
@@ -15,13 +25,13 @@ U.action = {
 ---Prints a warning
 ---@param msg string
 function U.wprint(msg)
-    return vim.notify('Surround :: ' .. msg, vim.log.levels.WARN)
+    return vim.notify('[Surround] ' .. msg, vim.log.levels.WARN)
 end
 
 ---Abort the current operation
 function U.abort()
     local esc = A.nvim_replace_termcodes('<ESC>', true, true, true)
-    A.nvim_feedkeys(esc, 'n', false)
+    A.nvim_feedkeys(esc, 'ni', false)
 end
 
 ---Check if a string is <ESC> key
@@ -45,9 +55,35 @@ end
 function U.get_char()
     local char = U.parse_char()
     if U.is_esc(char) then
-        return U.abort()
+        return nil
     end
     return char
+end
+
+function U.get_indent(ln)
+    return ln:match('(%s*)(.*)')
+end
+
+---Get region for line movement or visual selection
+---NOTE: Returns the current line, if `vmode` is not given.
+---@param vmode? VMode
+---@return SRange
+function U.get_region(vmode)
+    if not vmode then
+        local row, col = unpack(A.nvim_win_get_cursor(0))
+        return { srow = row, scol = col, erow = row, ecol = col }
+    end
+
+    local buf = 0
+    local sln, eln
+
+    if vmode:match('[vV]') then
+        sln, eln = mark(buf, '<'), mark(buf, '>')
+    else
+        sln, eln = mark(buf, '['), mark(buf, ']')
+    end
+
+    return { srow = sln[1], scol = sln[2], erow = eln[1], ecol = eln[2] }
 end
 
 ---Replace pairs on the same line

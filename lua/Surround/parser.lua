@@ -13,9 +13,9 @@ function P.walk_char(col, line, pair)
     local pattern = pat_esc .. '.-' .. pat_esc
 
     local function inner_char(start)
-        local s, e = line:find(pattern, start)
+        local start_idx, end_idx = line:find(pattern, start)
 
-        if not s or not e then
+        if not start_idx or not end_idx then
             -- Pattern not found even after reverse lookup
             if reverse then
                 return
@@ -29,17 +29,17 @@ function P.walk_char(col, line, pair)
         end
 
         -- if the search is revered then we can say that cursor is ahead of the pattern
-        if reverse and (e < col and s < col) then
-            return s, e
+        if reverse and (end_idx < col and start_idx < col) then
+            return start_idx, end_idx
         end
 
         -- If the start + end of the pattern is greater than the cursor
         -- If the cursor is in b/w the pattern's start and end
-        if (s > col and e > col) or (s <= col and e > col) then
-            return s, e
+        if (start_idx > col and end_idx > col) or (start_idx <= col and end_idx > col) then
+            return start_idx, end_idx
         end
 
-        return inner_char(e - 1)
+        return inner_char(end_idx - 1)
     end
 
     return inner_char(1)
@@ -58,10 +58,10 @@ function P.walk_pair(col, line, spair, epair)
     local pattern = '%b' .. spair .. epair
 
     local function inner_pair(start)
-        local s, e = line:find(pattern, start)
+        local start_idx, end_idx = line:find(pattern, start)
 
         -- When both idx are nil, It could means eol or pairs not found
-        if not s or not e then
+        if not start_idx or not end_idx then
             -- NOTE: this is the place where search for extended pairs begin
             -- true : If pairs not found in the line
             -- false : If search reaches the end of line
@@ -71,23 +71,23 @@ function P.walk_pair(col, line, spair, epair)
         -- If starting and ending pair is away from cursor then it means we can easily replace
         -- This is only valid before giving any score to other pairs
         -- We can also say this as `lookahead`
-        if not score and s > col and e > col then
-            return false, s, e
+        if not score and start_idx > col and end_idx > col then
+            return false, start_idx, end_idx
         end
 
         -- To qualify as the pairs the cursor should be in b/w opening and closing pair
-        if s <= coll and e >= coll then
+        if start_idx <= coll and end_idx >= coll then
             -- To solve the nested the pairs problem, we need to find the closest opening pair
             -- We can give each pair a score to determine the distance b/w the opening pair and the cursor
             -- Pair with smallest score will win and has to be the closest pairs to cursor
-            local diff = col - s
+            local diff = col - start_idx
             if not score or diff < score then
-                score, sidx, eidx = diff, s, e
+                score, sidx, eidx = diff, start_idx, end_idx
             end
         end
 
         -- Then we repeat this until all the pairs are analyzed
-        return inner_pair(s + 1)
+        return inner_pair(start_idx + 1)
     end
 
     return inner_pair(1)
