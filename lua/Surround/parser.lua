@@ -50,6 +50,7 @@ end
 ---@param line string Current line
 ---@param spair string Opening pair
 ---@param epair string Closing pair
+---@return boolean boolean Whether to extend search
 ---@return number number Starting position of pair
 ---@return number number Ending position of pair
 function P.walk_pair(col, line, spair, epair)
